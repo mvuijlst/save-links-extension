@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (existingLink) {
         // If the link exists, prefill the saved description and tags
-        descriptionInput.value = existingLink.description;
+        descriptionInput.value = unformatDescription(existingLink.description);
         tags = existingLink.tags || [];
         renderTags();
         isLinkExisting = true; // Mark that the link already exists
@@ -55,6 +55,36 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   }
+
+// Function to format the description for saving
+function formatDescription(description) {
+  // Trim whitespace at the start and end
+  description = description.trim();
+
+  // Replace double line breaks with <p> tags, preserving any existing HTML tags within the text
+  const formattedDescription = description
+    .split(/\n\s*\n/)   // Split by double line breaks (paragraphs)
+    .map(line => `<p>${line.trim().replace(/\n/g, '<br>')}</p>`)  // Replace single line breaks with <br> within paragraphs
+    .join('');  // Join without newlines, as we want continuous HTML
+  
+  return formattedDescription;
+}
+
+// Function to unformat the description for display or editing
+function unformatDescription(description) {
+  // Replace <br> with single newlines and </p><p> with double newlines
+  description = description
+    .replace(/<br>/g, '\n')        // Convert <br> tags back to single newlines
+    .replace(/<\/p><p>/g, '\n\n'); // Convert adjacent <p> tags back to double newlines (paragraphs)
+
+  // Remove outer <p> tags if present
+  if (description.startsWith('<p>') && description.endsWith('</p>')) {
+    description = description.slice(3, -4); // Remove the first <p> and last </p>
+  }
+
+  return description.trim(); // Trim any extra spaces or newlines
+}
+
 
   // Handle tag input with Tab and Enter
   tagInput.addEventListener('keydown', function(e) {
@@ -111,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
   postForm.addEventListener('submit', function(e) {
     e.preventDefault();
     const title = titleInput.value;
-    const description = descriptionInput.value;
+    const description = formatDescription(descriptionInput.value);;
 
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       let tab = tabs[0];
