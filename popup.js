@@ -7,25 +7,32 @@ document.addEventListener('DOMContentLoaded', function() {
   let postForm = document.getElementById('postForm');
   let viewLinksButton = document.getElementById('viewLinksButton');
   let tags = [];
+  let isLinkExisting = false;
 
   // Prefill title and description from the active tab
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     let tab = tabs[0];
     titleInput.value = tab.title;
 
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: () => window.getSelection().toString() || document.querySelector('meta[name="description"]')?.content || 'No description available'
-    }, (results) => {
-      descriptionInput.value = results[0].result;
-    });
-
-    // Check if the link already exists and load its tags
+    // Check if the link already exists in storage
     chrome.storage.sync.get({ links: [] }, function(result) {
       let existingLink = result.links.find(link => link.url === tab.url);
+      
       if (existingLink) {
+        // If the link exists, prefill the saved description and tags
+        descriptionInput.value = existingLink.description;
         tags = existingLink.tags || [];
         renderTags();
+        isLinkExisting = true; // Mark that the link already exists
+      } else {
+        // If the link doesn't exist, fetch the page description
+        chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => window.getSelection().toString() || document.querySelector('meta[name="description"]')?.content || 'No description available'
+        }, (results) => {
+          descriptionInput.value = results[0].result;
+        });
+        isLinkExisting = false; // Mark that the link is new
       }
     });
   });
