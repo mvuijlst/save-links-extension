@@ -61,28 +61,29 @@ function formatDescription(description) {
   // Trim whitespace at the start and end
   description = description.trim();
 
-  // Replace double line breaks with <p> tags, preserving any existing HTML tags within the text
-  const formattedDescription = description
-    .split(/\n\s*\n/)   // Split by double line breaks (paragraphs)
-    .map(line => `<p>${line.trim().replace(/\n/g, '<br>')}</p>`)  // Replace single line breaks with <br> within paragraphs
-    .join('');  // Join without newlines, as we want continuous HTML
-  
+  // Replace double newlines with <p> tags
+  let formattedDescription = description
+    .split(/\n\s*\n/)   // Split by double newlines (paragraph breaks)
+    .map(line => line.trim())       // Trim each paragraph
+    .map(line => `<p>${line}</p>`)  // Wrap each paragraph with <p> tags
+    .join('');                      // Join paragraphs without extra spaces
+
   return formattedDescription;
 }
 
 // Function to unformat the description for display or editing
 function unformatDescription(description) {
-  // Replace <br> with single newlines and </p><p> with double newlines
+  // Replace </p><p> with double newlines and <br> with single newlines
   description = description
-    .replace(/<br>/g, '\n')        // Convert <br> tags back to single newlines
-    .replace(/<\/p><p>/g, '\n\n'); // Convert adjacent <p> tags back to double newlines (paragraphs)
+    .replace(/<\/p><p>/g, '\n\n')   // Convert adjacent <p> tags back to double newlines (paragraphs)
+    .replace(/<br>/g, '\n');        // Convert <br> tags back to single newlines
 
-  // Remove outer <p> tags if present
+  // Remove outer <p> tags if present (not nested)
   if (description.startsWith('<p>') && description.endsWith('</p>')) {
-    description = description.slice(3, -4); // Remove the first <p> and last </p>
+    description = description.slice(3, -4);  // Remove outermost <p> and </p>
   }
 
-  return description.trim(); // Trim any extra spaces or newlines
+  return description.trim();  // Trim any extra spaces
 }
 
 

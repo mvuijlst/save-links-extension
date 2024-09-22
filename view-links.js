@@ -26,7 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Display HTML (simplified)
         displayHtml += `
             <p><strong><a href="${link.url}">${link.title}</a></strong></p>
-            <p>${link.description}<br /><small><em>Tags:</em> ${link.tags.map(tag => `<a href="/tag/${slugify(tag)}">${tag}</a>`).join(', ')}</small></p>`;
+            ${link.description}
+            <p style="margin-top: 6px"><small><em>Tags:</em> ${link.tags.map(tag => `<a href="/tag/${slugify(tag)}">${tag}</a>`).join(', ')}</small></p>`;
 
         // Gutenberg HTML for clipboard
         clipboardHtml += `
@@ -37,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <!-- /wp:heading -->
 
             <!-- wp:paragraph -->
-            <p>${link.description}</p>
+            ${link.description}
             <!-- /wp:paragraph -->
 
             <!-- wp:group {"style":{"spacing":{"padding":{"top":"0","bottom":"0","left":"0","right":"0"},"blockGap":"0"}},"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"left","verticalAlignment":"top"}} -->
