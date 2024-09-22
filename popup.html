@@ -7,13 +7,18 @@
         width: 300px;
         font-family: Arial, sans-serif;
       }
-      textarea {
-        width: 100%;
-        height: 60px;
-      }
-      input, button {
+      textarea, input {
         width: 100%;
         margin-bottom: 10px;
+      }
+      #tagSuggestions div {
+        background-color: #f1f1f1;
+        padding: 5px;
+        cursor: pointer;
+        margin-bottom: 5px;
+      }
+      #tagSuggestions div:hover {
+        background-color: #ddd;
       }
     </style>
   </head>
@@ -25,6 +30,10 @@
 
       <label for="description">Description</label><br>
       <textarea id="description" placeholder="Selected text or page description"></textarea><br>
+
+      <label for="tags">Tags</label><br>
+      <input type="text" id="tagInput" placeholder="Add tags (comma separated)">
+      <div id="tagSuggestions"></div> <!-- For showing autocomplete suggestions -->
 
       <button type="submit">Save Link</button>
     </form>

@@ -1,41 +1,84 @@
 document.addEventListener('DOMContentLoaded', function() {
   let titleInput = document.getElementById('title');
   let descriptionInput = document.getElementById('description');
+  let tagInput = document.getElementById('tagInput');
+  let tagSuggestionsDiv = document.getElementById('tagSuggestions');
   let postForm = document.getElementById('postForm');
   let linkCount = document.getElementById('linkCount');
   let viewLinksButton = document.getElementById('viewLinksButton');
 
-  // Prefill title and description
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     let tab = tabs[0];
-    titleInput.value = tab.title;
+    let url = tab.url;  // Get the actual page URL
 
-    // Attempt to get selected text or meta description from the page
+    // Prefill the title and description
+    titleInput.value = tab.title;
     chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: () => window.getSelection().toString() || document.querySelector('meta[name="description"]')?.content || 'No description available'
     }, (results) => {
       descriptionInput.value = results[0].result;
     });
+
+    // Check if the link already exists
+    chrome.storage.sync.get({ links: [] }, function(result) {
+      let existingLink = result.links.find(link => link.url === url);
+      if (existingLink) {
+        // Prefill the form with existing link data
+        titleInput.value = existingLink.title;
+        descriptionInput.value = existingLink.description;
+        tagInput.value = existingLink.tags.join(', ');
+      }
+    });
   });
 
-  // Submit the link and save it to storage
+  // Handle autocomplete for tags
+  chrome.storage.sync.get({ tags: [] }, function(result) {
+    let savedTags = result.tags;
+    let suggestions = [...new Set(savedTags)];
+
+    tagInput.addEventListener('input', function() {
+      const input = tagInput.value.toLowerCase();
+      tagSuggestionsDiv.innerHTML = '';
+
+      if (input) {
+        const filteredTags = suggestions.filter(tag => tag.toLowerCase().includes(input));
+        filteredTags.forEach(tag => {
+          const suggestion = document.createElement('div');
+          suggestion.textContent = tag;
+          suggestion.onclick = function() {
+            tagInput.value = tag;
+            tagSuggestionsDiv.innerHTML = '';
+          };
+          tagSuggestionsDiv.appendChild(suggestion);
+        });
+      }
+    });
+  });
+
+  // Submit the form
   postForm.addEventListener('submit', function(e) {
     e.preventDefault();
     const title = titleInput.value;
     const description = descriptionInput.value;
-    const url = window.location.href;
+    const tags = tagInput.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+    
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      let tab = tabs[0];
+      const url = tab.url;
+      const date = new Date().toISOString();
 
-    const date = new Date().toISOString();  // Save the date in ISO format
+      chrome.storage.sync.get({ links: [], tags: [] }, function(result) {
+        let updatedLinks = result.links.filter(link => link.url !== url);  // Remove old link if exists
+        const newLink = { title, description, url, date, tags };
+        updatedLinks.push(newLink);
 
-    chrome.storage.sync.get({ links: [] }, function(result) {
-      const newLink = { title, description, url, date };
-      const updatedLinks = result.links.concat(newLink);
+        const updatedTags = [...new Set([...result.tags, ...tags])]; // Save new tags
 
-      // Save the updated list of links and update the badge count
-      chrome.storage.sync.set({ links: updatedLinks }, function() {
-        chrome.action.setBadgeText({ text: updatedLinks.length.toString() }); // Update badge count
-        window.close();  // Close the popup window
+        chrome.storage.sync.set({ links: updatedLinks, tags: updatedTags }, function() {
+          chrome.action.setBadgeText({ text: updatedLinks.length.toString() });
+          window.close();  // Close the popup window
+        });
       });
     });
   });
@@ -44,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
   chrome.storage.sync.get({ links: [] }, function(result) {
     const linkCount = result.links.length;
     updateLinkCount(linkCount);
-    chrome.action.setBadgeText({ text: linkCount.toString() }); // Set badge count
+    chrome.action.setBadgeText({ text: linkCount.toString() });
   });
 
   // Open the list of links in a new tab
@@ -52,7 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
     chrome.tabs.create({ url: 'view-links.html' });
   });
 
-  // Update link count display in the popup
   function updateLinkCount(count) {
     linkCount.textContent = `You have ${count} saved links.`;
   }

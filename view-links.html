@@ -2,10 +2,28 @@
 <html>
 <head>
   <title>Saved Links</title>
+  <style>
+    .link-entry {
+      margin-bottom: var(--wp--preset--spacing--20);
+    }
+    .link-title {
+      font-size: clamp(0.929rem, 0.929rem + ((1vw - 0.2rem) * 0.785), 1.4rem);
+    }
+    .tags {
+      display: flex;
+      align-items: center;
+    }
+    .tags svg {
+      width: 16px;
+      height: 16px;
+      margin-right: 5px;
+    }
+  </style>
 </head>
 <body>
   <h3 id="title">Links van [earliest date] tot [last date]</h3>
   <div id="linkList"></div>
+  <button id="copyHtmlButton">Copy HTML to Clipboard</button>
   <button id="clearLinksButton">Clear Links</button>
 
   <script src="view-links.js"></script>
