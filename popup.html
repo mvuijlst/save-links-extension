@@ -4,12 +4,20 @@
     <title>Save Link</title>
     <style>
       body {
-        width: 300px;
+        width: 400px;
+        padding: 10px;
         font-family: Arial, sans-serif;
+        box-sizing: border-box;
       }
       textarea, input {
-        width: 100%;
+        width: calc(100% - 20px); /* Ensure equal padding on both sides */
         margin-bottom: 10px;
+        padding: 8px;
+        font-size: 14px;
+        font-family: Arial, sans-serif;
+      }
+      textarea {
+        height: 100px; /* Adjusts the height of the textarea */
       }
       #tagSuggestions div {
         background-color: #f1f1f1;
@@ -19,6 +27,29 @@
       }
       #tagSuggestions div:hover {
         background-color: #ddd;
+      }
+      #tagContainer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-bottom: 10px;
+      }
+      .tag-pill {
+        background-color: #ddd;
+        padding: 5px 10px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+      }
+      .tag-pill .remove-tag {
+        margin-left: 5px;
+        cursor: pointer;
+      }
+      button {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        margin-bottom: 10px;
       }
     </style>
   </head>
@@ -32,13 +63,13 @@
       <textarea id="description" placeholder="Selected text or page description"></textarea><br>
 
       <label for="tags">Tags</label><br>
-      <input type="text" id="tagInput" placeholder="Add tags (comma separated)">
-      <div id="tagSuggestions"></div> <!-- For showing autocomplete suggestions -->
+      <input type="text" id="tagInput" placeholder="Type a tag and press Tab or Enter">
+      <div id="tagContainer"></div>
+      <div id="tagSuggestions"></div>
 
       <button type="submit">Save Link</button>
     </form>
 
-    <div id="linkCount">You have 0 saved links.</div>
     <button id="viewLinksButton">View Saved Links</button>
 
     <script src="popup.js"></script>

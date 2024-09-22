@@ -2,17 +2,17 @@ document.addEventListener('DOMContentLoaded', function() {
   let titleInput = document.getElementById('title');
   let descriptionInput = document.getElementById('description');
   let tagInput = document.getElementById('tagInput');
+  let tagContainer = document.getElementById('tagContainer');
   let tagSuggestionsDiv = document.getElementById('tagSuggestions');
   let postForm = document.getElementById('postForm');
-  let linkCount = document.getElementById('linkCount');
   let viewLinksButton = document.getElementById('viewLinksButton');
+  let tags = [];
 
+  // Prefill title and description from the active tab
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     let tab = tabs[0];
-    let url = tab.url;  // Get the actual page URL
-
-    // Prefill the title and description
     titleInput.value = tab.title;
+
     chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: () => window.getSelection().toString() || document.querySelector('meta[name="description"]')?.content || 'No description available'
@@ -20,19 +20,59 @@ document.addEventListener('DOMContentLoaded', function() {
       descriptionInput.value = results[0].result;
     });
 
-    // Check if the link already exists
+    // Check if the link already exists and load its tags
     chrome.storage.sync.get({ links: [] }, function(result) {
-      let existingLink = result.links.find(link => link.url === url);
+      let existingLink = result.links.find(link => link.url === tab.url);
       if (existingLink) {
-        // Prefill the form with existing link data
-        titleInput.value = existingLink.title;
-        descriptionInput.value = existingLink.description;
-        tagInput.value = existingLink.tags.join(', ');
+        tags = existingLink.tags || [];
+        renderTags();
       }
     });
   });
 
-  // Handle autocomplete for tags
+  // Render tag pills
+  function renderTags() {
+    tagContainer.innerHTML = '';
+    tags.forEach((tag, index) => {
+      const pill = document.createElement('div');
+      pill.className = 'tag-pill';
+      pill.innerHTML = `${tag} <span class="remove-tag" data-index="${index}">&times;</span>`;
+      tagContainer.appendChild(pill);
+    });
+
+    document.querySelectorAll('.remove-tag').forEach(element => {
+      element.addEventListener('click', function() {
+        const index = this.getAttribute('data-index');
+        tags.splice(index, 1);
+        renderTags();
+      });
+    });
+  }
+
+  // Handle tag input with Tab and Enter
+  tagInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && tagInput.value.trim() !== '') {
+      e.preventDefault(); // Prevent form submission on Enter
+      const newTag = tagInput.value.trim();
+
+      if (newTag && !tags.includes(newTag)) {
+        tags.push(newTag);
+        renderTags();
+      }
+      tagInput.value = '';
+    } else if (e.key === 'Tab' && tagInput.value.trim() !== '') {
+      e.preventDefault(); // Prevent moving out of input field with Tab
+      const newTag = tagInput.value.trim();
+
+      if (newTag && !tags.includes(newTag)) {
+        tags.push(newTag);
+        renderTags();
+      }
+      tagInput.value = '';
+    }
+  });
+
+  // Get existing tags for autocomplete
   chrome.storage.sync.get({ tags: [] }, function(result) {
     let savedTags = result.tags;
     let suggestions = [...new Set(savedTags)];
@@ -47,7 +87,11 @@ document.addEventListener('DOMContentLoaded', function() {
           const suggestion = document.createElement('div');
           suggestion.textContent = tag;
           suggestion.onclick = function() {
-            tagInput.value = tag;
+            if (!tags.includes(tag)) {
+              tags.push(tag);
+              renderTags();
+            }
+            tagInput.value = '';
             tagSuggestionsDiv.innerHTML = '';
           };
           tagSuggestionsDiv.appendChild(suggestion);
@@ -56,13 +100,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Submit the form
+  // Submit the form and save the link
   postForm.addEventListener('submit', function(e) {
     e.preventDefault();
     const title = titleInput.value;
     const description = descriptionInput.value;
-    const tags = tagInput.value.split(',').map(tag => tag.trim()).filter(tag => tag);
-    
+
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       let tab = tabs[0];
       const url = tab.url;
@@ -83,19 +126,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Update link count and badge text when the popup opens
-  chrome.storage.sync.get({ links: [] }, function(result) {
-    const linkCount = result.links.length;
-    updateLinkCount(linkCount);
-    chrome.action.setBadgeText({ text: linkCount.toString() });
-  });
-
-  // Open the list of links in a new tab
+  // Handle view links button click
   viewLinksButton.addEventListener('click', function() {
     chrome.tabs.create({ url: 'view-links.html' });
   });
-
-  function updateLinkCount(count) {
-    linkCount.textContent = `You have ${count} saved links.`;
-  }
 });

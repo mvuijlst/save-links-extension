@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let copyHtmlButton = document.getElementById('copyHtmlButton');
 
   let allTags = new Set();
+  let clipboardHtml = '';  // For storing Gutenberg HTML 
 
   // Load the stored links
   chrome.storage.sync.get({ links: [] }, function(result) {
@@ -16,13 +17,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const sortedLinks = links.sort((a, b) => new Date(a.date) - new Date(b.date));
-    let htmlContent = '';
+    let displayHtml = '';
 
-    // Create the required HTML structure with the comments and inline styles
+    // Generate HTML for display and Gutenberg HTML for clipboard
     sortedLinks.forEach((link, index) => {
-      const tagList = link.tags.map(tag => `<a href="/tag/${tag}">${tag}</a>`).join(', ');
+      const tagList = link.tags.map(tag => tag).join(', ');
 
-      htmlContent += `
+      // Display HTML (simplified)
+      displayHtml += `
+        <p><strong><a href="${link.url}">${link.title}</a></strong></p>
+        <p>${link.description}<br /><small><em>Tags:</em> ${tagList}</small></p>`;
+
+      // Gutenberg HTML for clipboard
+      clipboardHtml += `
         <!-- wp:group {"style":{"spacing":{"margin":{"top":"0","bottom":"var:preset|spacing|20"},"blockGap":"0.5rem"}},"layout":{"type":"flex","orientation":"vertical"}} -->
         <div class="wp-block-group" style="margin-top:0;margin-bottom:var(--wp--preset--spacing--20)">
           <!-- wp:heading {"level":4,"style":{"typography":{"fontSize":"1.4rem"}}} -->
@@ -38,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <!-- wp:uagb/icon {"icon":"tags","iconSize":1,"iconSizeUnit":"em","iconColor":"#636363","block_id":"${generateUniqueId()}","iconAccessabilityMode":"image","iconAccessabilityDesc":"Tags"} /-->
 
             <!-- wp:paragraph {"fontSize":"small"} -->
-            <p class="has-small-font-size">${tagList}</p>
+            <p class="has-small-font-size">${link.tags.map(tag => `<a href="/tag/${tag}">${tag}</a>`).join(', ')}</p>
             <!-- /wp:paragraph -->
           </div>
           <!-- /wp:group -->
@@ -49,19 +56,39 @@ document.addEventListener('DOMContentLoaded', function() {
       link.tags.forEach(tag => allTags.add(tag));
     });
 
-    // Add the final paragraph for all tags
-    htmlContent += `
+    // Add the final paragraph with all tags
+    clipboardHtml += `
       <!-- wp:paragraph -->
       <p><strong>Tags</strong>: ${Array.from(allTags).join(', ')}</p>
       <!-- /wp:paragraph -->
     `;
 
-    linkList.innerHTML = htmlContent;
+    linkList.innerHTML = displayHtml;
 
-    // Set the title with the date range
-    const firstDate = new Date(sortedLinks[0].date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
-    const lastDate = new Date(sortedLinks[sortedLinks.length - 1].date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
-    title.textContent = `Links van ${firstDate} tot ${lastDate}`;
+    // Date formatting logic for the title
+    const firstDate = new Date(sortedLinks[0].date);
+    const lastDate = new Date(sortedLinks[sortedLinks.length - 1].date);
+
+    const firstDay = firstDate.toLocaleDateString('nl-NL', { day: 'numeric' });
+    const lastDay = lastDate.toLocaleDateString('nl-NL', { day: 'numeric' });
+    const firstMonthYear = firstDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+    const lastMonthYear = lastDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+
+    if (firstMonthYear === lastMonthYear && firstDay === lastDay) {
+      // Case when the start and end dates are the same
+      title.textContent = `Links voor ${firstDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+    } else if (firstMonthYear === lastMonthYear) {
+      // Case when start and end are in the same month but different days
+      title.textContent = `Links van ${firstDay} tot ${lastDay} ${firstMonthYear}`;
+    } else if (firstDate.getFullYear() === lastDate.getFullYear()) {
+      // Case when start and end are in different months but the same year
+      const firstMonth = firstDate.toLocaleDateString('nl-NL', { month: 'long' });
+      const lastMonth = lastDate.toLocaleDateString('nl-NL', { month: 'long' });
+      title.textContent = `Links van ${firstDay} ${firstMonth} tot ${lastDay} ${lastMonth} ${firstDate.getFullYear()}`;
+    } else {
+      // Case when start and end are in different years
+      title.textContent = `Links van ${firstDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })} tot ${lastDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+    }
   });
 
   // Function to generate unique IDs for icons
@@ -69,17 +96,15 @@ document.addEventListener('DOMContentLoaded', function() {
     return Math.random().toString(36).substr(2, 9);
   }
 
-  // Copy HTML content to clipboard
+  // Copy Gutenberg HTML content to clipboard
   copyHtmlButton.addEventListener('click', function() {
-    chrome.storage.sync.get({ links: [] }, function(result) {
-      const textArea = document.createElement('textarea');
-      textArea.value = linkList.innerHTML;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      alert('HTML copied to clipboard!');
-    });
+    const textArea = document.createElement('textarea');
+    textArea.value = clipboardHtml;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    alert('HTML copied to clipboard!');
   });
 
   // Clear links when button is clicked
