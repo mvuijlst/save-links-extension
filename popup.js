@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // If the link exists, prefill the saved description and tags
         descriptionInput.value = unformatDescription(existingLink.description);
         tags = existingLink.tags || [];
+        originalDate = existingLink.date || null;  // Preserve the original date if available
         renderTags();
         isLinkExisting = true; // Mark that the link already exists
       } else {
@@ -147,7 +148,7 @@ function unformatDescription(description) {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       let tab = tabs[0];
       const url = tab.url;
-      const date = new Date().toISOString();
+      const date = originalDate || new Date().toISOString();  // Use original date if it exists
 
       chrome.storage.sync.get({ links: [], tags: [] }, function(result) {
         let updatedLinks = result.links.filter(link => link.url !== url);  // Remove old link if exists
