@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let postForm = document.getElementById('postForm');
   let viewLinksButton = document.getElementById('viewLinksButton');
   let tags = [];
-  let isLinkExisting = false;
+  let originalDate = null;  
 
   // Prefill title and description from the active tab
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
