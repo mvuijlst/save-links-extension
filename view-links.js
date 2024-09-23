@@ -28,8 +28,12 @@ document.addEventListener('DOMContentLoaded', function() {
             <p><strong><a href="${link.url}">${link.title}</a></strong></p>
             ${link.description}
             <p style="margin-top: 6px"><small><em>Tags:</em> ${link.tags.map(tag => `<a href="/tag/${slugify(tag)}">${tag}</a>`).join(', ')}</small></p>`;
-
         // Gutenberg HTML for clipboard
+        // Replace </p><p> with Gutenberg block structure
+      let formattedDescription = link.description.replace(/<\/p><p>/g, `</p>
+<!-- /wp:paragraph -->
+<!-- wp:paragraph -->
+<p>`);
         clipboardHtml += `
             <!-- wp:group {"style":{"spacing":{"margin":{"top":"0","bottom":"var:preset|spacing|20"},"blockGap":"0.5rem"}},"layout":{"type":"flex","orientation":"vertical"}} -->
             <div class="wp-block-group" style="margin-top:0;margin-bottom:var(--wp--preset--spacing--20)">
@@ -38,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <!-- /wp:heading -->
 
             <!-- wp:paragraph -->
-            ${link.description}
+            ${formattedDescription}
             <!-- /wp:paragraph -->
 
             <!-- wp:group {"style":{"spacing":{"padding":{"top":"0","bottom":"0","left":"0","right":"0"},"blockGap":"0"}},"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"left","verticalAlignment":"top"}} -->

@@ -62,15 +62,16 @@ function formatDescription(description) {
   // Trim whitespace at the start and end
   description = description.trim();
 
-  // Replace double newlines with <p> tags
+  // Replace double line breaks with <p> tags, and single line breaks with <br />
   let formattedDescription = description
     .split(/\n\s*\n/)   // Split by double newlines (paragraph breaks)
-    .map(line => line.trim())       // Trim each paragraph
-    .map(line => `<p>${line}</p>`)  // Wrap each paragraph with <p> tags
-    .join('');                      // Join paragraphs without extra spaces
+    .map(line => line.trim().replace(/\n/g, '<br />'))  // Replace single newlines with <br /> within paragraphs
+    .map(line => `<p>${line}</p>`)   // Wrap each paragraph with <p> tags
+    .join('');  // Join without additional spaces
 
   return formattedDescription;
 }
+
 
 // Function to unformat the description for display or editing
 function unformatDescription(description) {
