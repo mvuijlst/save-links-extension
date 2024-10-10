@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             <!-- wp:group {"style":{"spacing":{"padding":{"top":"0","bottom":"0","left":"0","right":"0"},"blockGap":"0"}},"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"left","verticalAlignment":"top"}} -->
             <div class="wp-block-group" style="padding-top:0;padding-right:0;padding-bottom:0;padding-left:0">
-                <!-- wp:uagb/icon {"icon":"tags","iconSize":1,"iconSizeUnit":"em","iconColor":"#636363","block_id":"${generateUniqueId()}","iconAccessabilityMode":"image","iconAccessabilityDesc":"Tags"} /-->
+                <!-- wp:uagb/icon {"icon":"tags","iconSize":16,"iconSizeUnit":"px","iconColor":"#636363","block_id":"${generateUniqueId()}","iconAccessabilityMode":"image","iconAccessabilityDesc":"Tags"} /-->
 
                 <!-- wp:paragraph {"fontSize":"small"} -->
                 <p class="has-small-font-size">${link.tags.map(tag => `<a href="/tag/${slugify(tag)}">${tag}</a>`).join(', ')}</p>
@@ -131,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
   clearLinksButton.addEventListener('click', function() {
     chrome.storage.sync.set({ links: [] }, function() {
       alert('All links cleared!');
+      chrome.action.setBadgeText({ text: '' });
       linkList.innerHTML = '<p>No links saved yet.</p>';
     });
   });
