@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     titleInput.value = tab.title;
 
     // Check if the link already exists in storage
-    chrome.storage.sync.get({ links: [] }, function(result) {
+    chrome.storage.local.get({ links: [] }, function(result) {
       let existingLink = result.links.find(link => link.url === tab.url);
       
       if (existingLink) {
@@ -113,7 +113,7 @@ function unformatDescription(description) {
   });
 
   // Get existing tags for autocomplete
-  chrome.storage.sync.get({ tags: [] }, function(result) {
+  chrome.storage.local.get({ tags: [] }, function(result) {
     let savedTags = result.tags;
     let suggestions = [...new Set(savedTags)];
 
@@ -151,14 +151,14 @@ function unformatDescription(description) {
       const url = tab.url;
       const date = originalDate || new Date().toISOString();  // Use original date if it exists
 
-      chrome.storage.sync.get({ links: [], tags: [] }, function(result) {
+      chrome.storage.local.get({ links: [], tags: [] }, function(result) {
         let updatedLinks = result.links.filter(link => link.url !== url);  // Remove old link if exists
         const newLink = { title, description, url, date, tags };
         updatedLinks.push(newLink);
 
         const updatedTags = [...new Set([...result.tags, ...tags])]; // Save new tags
 
-        chrome.storage.sync.set({ links: updatedLinks, tags: updatedTags }, function() {
+        chrome.storage.local.set({ links: updatedLinks, tags: updatedTags }, function() {
           chrome.action.setBadgeText({ text: updatedLinks.length.toString() });
           window.close();  // Close the popup window
         });

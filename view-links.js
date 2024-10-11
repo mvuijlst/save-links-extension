@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let clipboardHtml = '';  // For storing Gutenberg HTML 
 
   // Load the stored links
-  chrome.storage.sync.get({ links: [] }, function(result) {
+  chrome.storage.local.get({ links: [] }, function(result) {
     const links = result.links;
 
     if (links.length === 0) {
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Clear links when button is clicked
   clearLinksButton.addEventListener('click', function() {
-    chrome.storage.sync.set({ links: [] }, function() {
+    chrome.storage.local.set({ links: [] }, function() {
       alert('All links cleared!');
       chrome.action.setBadgeText({ text: '' });
       linkList.innerHTML = '<p>No links saved yet.</p>';
